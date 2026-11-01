@@ -25,7 +25,7 @@ open "/Applications/OpenCode Answer.app"
 
 On first launch, allow notifications when macOS asks. In the menu bar menu you can turn on **Launch at Login**, and turn the pop-up panel and notifications on or off.
 
-To update, `git pull` and run `./build.sh --install` again. To uninstall, quit the app from its menu and delete `/Applications/OpenCode Answer.app`.
+To check which version you have, choose **About OpenCode Answer** from the menu. To update, `git pull` and run `./build.sh --install` again. To uninstall, quit the app from its menu and delete `/Applications/OpenCode Answer.app`.
 
 ### Troubleshooting
 
@@ -90,8 +90,12 @@ swift build          # debug build
 ./build.sh           # release .app bundle in build/
 ```
 
+The version lives in `VERSION`; `build.sh` writes it into the app's Info.plist and uses the commit count as the build number.
+
 The icon is pixel art drawn by `icon/make-icon.swift`. After editing the art there, run `swift icon/make-icon.swift icon` and rebuild; `build.sh` compiles `icon/AppIcon.icon` with Xcode's `actool`.
 
 ## License
 
 [MIT](LICENSE)
+
+<sub>If it saves you a few trips to the terminal, you can [buy me a coffee](https://buymeacoffee.com/michal.hachula).</sub>

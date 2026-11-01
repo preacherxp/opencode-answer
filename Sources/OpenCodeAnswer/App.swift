@@ -9,7 +9,7 @@ struct OpenCodeAnswerApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContent(store: delegate.store, showPanel: { delegate.showPanel(focus: true) })
+            MenuContent(store: delegate.store, showPanel: { delegate.showPanel(focus: true) }, showAbout: delegate.showAbout)
         } label: {
             MenuBarLabel(store: delegate.store)
         }
@@ -41,6 +41,7 @@ enum Setting: String {
 struct MenuContent: View {
     @ObservedObject var store: QuestionStore
     var showPanel: () -> Void
+    var showAbout: () -> Void
 
     @AppStorage(Setting.popUpPanel.rawValue) private var popUpPanel = Setting.popUpPanel.isOn
     @AppStorage(Setting.notify.rawValue) private var notify = Setting.notify.isOn
@@ -82,6 +83,7 @@ struct MenuContent: View {
 
         Divider()
 
+        Button("About OpenCode Answer") { showAbout() }
         Button("Quit") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
@@ -108,6 +110,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     func showPanel(focus: Bool) {
         panel.present(focus: focus)
+    }
+
+    /// The standard About panel: icon, name, version and build from Info.plist, plus the credits below.
+    func showAbout() {
+        NSApp.activate()
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: Self.aboutCredits])
+    }
+
+    private static var aboutCredits: NSAttributedString {
+        let centered = NSMutableParagraphStyle()
+        centered.alignment = .center
+        let style: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+            .foregroundColor: NSColor.secondaryLabelColor,
+            .paragraphStyle: centered,
+        ]
+        let credits = NSMutableAttributedString(string: "Answer OpenCode's questions from the menu bar.\n\n", attributes: style)
+        func link(_ title: String, _ url: String) {
+            credits.append(NSAttributedString(string: title, attributes: style.merging([.link: URL(string: url)!]) { $1 }))
+        }
+        link("Source on GitHub", "https://github.com/preacherxp/opencode-answer")
+        credits.append(NSAttributedString(string: "  ·  ", attributes: style))
+        link("Buy me a coffee", "https://buymeacoffee.com/michal.hachula")
+        return credits
     }
 
     private func announce(_ question: PendingQuestion) {

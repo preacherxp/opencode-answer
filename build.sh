@@ -6,6 +6,9 @@ cd "$(dirname "$0")"
 swift build -c release
 BIN="$(swift build -c release --show-bin-path)/OpenCodeAnswer"
 APP="build/OpenCode Answer.app"
+# Version comes from ./VERSION; the build number is the commit count, so every commit gets a new one.
+VERSION="$(tr -d '[:space:]' < VERSION)"
+BUILD="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -23,7 +26,7 @@ else
     echo "actool not found (needs Xcode); building without an app icon"
 fi
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -35,8 +38,9 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIconName</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.1.0</string>
-    <key>CFBundleVersion</key><string>1</string>
+    <key>CFBundleShortVersionString</key><string>$VERSION</string>
+    <key>CFBundleVersion</key><string>$BUILD</string>
+    <key>NSHumanReadableCopyright</key><string>© 2026 preacherxp · MIT License</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
@@ -46,7 +50,7 @@ PLIST
 
 # Ad-hoc signature: required for notifications and launch at login.
 codesign --force --sign - "$APP"
-echo "Built $APP"
+echo "Built $APP ($VERSION, build $BUILD)"
 
 if [ "${1:-}" = "--install" ]; then
     rm -rf "/Applications/OpenCode Answer.app"
