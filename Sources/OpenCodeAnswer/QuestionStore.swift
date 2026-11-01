@@ -31,7 +31,6 @@ final class QuestionStore: ObservableObject {
     /// Called when the last pending question goes away.
     var onEmpty: (() -> Void)?
 
-    private var drafts: [String: FormDraft] = [:]
     private var client: OpenCodeClient?
     private var loop: Task<Void, Never>?
 
@@ -42,13 +41,6 @@ final class QuestionStore: ObservableObject {
     func start() {
         guard loop == nil else { return }
         loop = Task { await run() }
-    }
-
-    func draft(for question: PendingQuestion) -> FormDraft {
-        if let draft = drafts[question.id] { return draft }
-        let draft = FormDraft(form: question.form)
-        drafts[question.id] = draft
-        return draft
     }
 
     // MARK: Connection loop
@@ -89,26 +81,22 @@ final class QuestionStore: ObservableObject {
     }
 
     private func handle(_ event: ServerEvent, client: OpenCodeClient) async {
-        switch event.type {
-        case "server.connected":
+        switch event {
+        case .connected:
             connection = .connected(version: client.service.version)
             await resync(client: client)
 
-        case "form.created":
-            guard let raw = event.data["form"],
-                  let data = try? JSONSerialization.data(withJSONObject: raw),
-                  let form = try? JSONDecoder().decode(FormInfo.self, from: data) else { return }
-            add(form, directory: event.directory, client: client, announce: true)
+        case .formCreated(let form, let directory):
+            add(form, directory: directory, client: client)
 
-        case "form.replied", "form.cancelled":
-            if let id = event.data["id"] as? String { remove(id) }
+        case .formSettled(let id):
+            remove(id)
 
-        case "session.deleted":
+        case .sessionDeleted(let sessionID):
             // Deleting a session doesn't cancel its forms, so drop them here.
-            guard let sessionID = event.data["sessionID"] as? String else { return }
             for question in questions where question.form.sessionID == sessionID { remove(question.id) }
 
-        default:
+        case .other:
             break
         }
     }
@@ -125,26 +113,25 @@ final class QuestionStore: ObservableObject {
         }
         let liveIDs = Set(live.map(\.id))
         for question in questions where !liveIDs.contains(question.id) { remove(question.id) }
-        for form in live { add(form, directory: nil, client: client, announce: true) }
+        for form in live { add(form, directory: nil, client: client) }
     }
 
-    private func add(_ form: FormInfo, directory: String?, client: OpenCodeClient, announce: Bool) {
+    private func add(_ form: FormInfo, directory: String?, client: OpenCodeClient) {
         guard !questions.contains(where: { $0.id == form.id }) else { return }
-        let question = PendingQuestion(form: form, directory: directory, sessionTitle: nil, receivedAt: Date())
+        let question = PendingQuestion(form: form, directory: directory)
         questions.append(question)
-        if announce { onNewQuestion?(question) }
+        onNewQuestion?(question)
 
         Task {
             guard let info = try? await client.sessionInfo(form.sessionID),
                   let index = questions.firstIndex(where: { $0.id == form.id }) else { return }
             questions[index].sessionTitle = info.title
-            questions[index].directory = questions[index].directory ?? info.directory
+            questions[index].directory = questions[index].directory ?? info.location?.directory
         }
     }
 
     private func remove(_ id: String) {
         questions.removeAll { $0.id == id }
-        drafts[id] = nil
         if selectedID == id { selectedID = questions.first?.id }
         if questions.isEmpty { onEmpty?() }
     }
@@ -153,7 +140,7 @@ final class QuestionStore: ObservableObject {
 
     func submit(_ question: PendingQuestion) async throws {
         guard let client else { throw APIError(status: 0, message: "Not connected to OpenCode") }
-        let answer = try draft(for: question).answer()
+        let answer = try question.draft.answer()
         try await removingIfGone(question) { try await client.reply(form: question.form, answer: answer) }
     }
 

@@ -31,12 +31,19 @@ struct MenuBarLabel: View {
     }
 }
 
+/// Menu toggles, stored in UserDefaults. Both start on.
+enum Setting: String {
+    case popUpPanel, notify
+
+    var isOn: Bool { UserDefaults.standard.object(forKey: rawValue) as? Bool ?? true }
+}
+
 struct MenuContent: View {
     @ObservedObject var store: QuestionStore
     var showPanel: () -> Void
 
-    @AppStorage("popUpPanel") private var popUpPanel = true
-    @AppStorage("notify") private var notify = true
+    @AppStorage(Setting.popUpPanel.rawValue) private var popUpPanel = Setting.popUpPanel.isOn
+    @AppStorage(Setting.notify.rawValue) private var notify = Setting.notify.isOn
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -104,13 +111,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     private func announce(_ question: PendingQuestion) {
-        let defaults = UserDefaults.standard
-        if defaults.object(forKey: "popUpPanel") as? Bool ?? true {
+        if Setting.popUpPanel.isOn {
             if !panel.isVisible { store.selectedID = question.id }
             // Don't take keyboard focus: the user may be typing elsewhere. One click focuses the panel.
             panel.present(focus: false)
         }
-        if let notifications, defaults.object(forKey: "notify") as? Bool ?? true {
+        if let notifications, Setting.notify.isOn {
             let content = UNMutableNotificationContent()
             content.title = "OpenCode · \(question.projectName)"
             content.body = question.form.title

@@ -5,7 +5,7 @@ struct ValidationError: LocalizedError {
     var errorDescription: String? { message }
 }
 
-/// Editable answer state for one form. Kept per form so switching between questions keeps input.
+/// Editable answer state for one form.
 @MainActor
 final class FormDraft: ObservableObject {
     let form: FormInfo
@@ -49,7 +49,8 @@ final class FormDraft: ObservableObject {
             if field.options?.isEmpty == false, !customChosen.contains(field.key) { return values[field.key] }
             return typed.isEmpty ? nil : .string(typed)
         case "number":
-            return Double(typed).map(FormValue.number)
+            // Double() also parses "inf" and "nan", which JSON can't carry.
+            return Double(typed).flatMap { $0.isFinite ? .number($0) : nil }
         case "integer":
             return Int(typed).map { .number(Double($0)) }
         case "multiselect":
@@ -102,8 +103,8 @@ final class FormDraft: ObservableObject {
     }
 
     /// Builds the reply payload, validating what the server would otherwise reject.
-    func answer() throws -> [String: Any] {
-        var answer: [String: Any] = [:]
+    func answer() throws -> [String: FormValue] {
+        var answer: [String: FormValue] = [:]
         for field in form.fields where field.type != "external" {
             let visible = isVisible(field)
             if !visible && field.hidden != true { continue }
@@ -123,12 +124,8 @@ final class FormDraft: ObservableObject {
                 if let min = field.minItems, items.count < min { throw ValidationError(message: "Pick at least \(min) for “\(field.title ?? field.key)”.") }
                 if let max = field.maxItems, items.count > max { throw ValidationError(message: "Pick at most \(max) for “\(field.title ?? field.key)”.") }
             }
-            switch value {
-            case .string(let s): answer[field.key] = s
-            case .number(let n): answer[field.key] = field.type == "integer" ? Int(n) as Any : n as Any
-            case .bool(let b): answer[field.key] = b
-            case .array(let a): answer[field.key] = a
-            }
+            // Whole numbers encode without a fraction, so integers stay integers.
+            answer[field.key] = value
         }
         return answer
     }

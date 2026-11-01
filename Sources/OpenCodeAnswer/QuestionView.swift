@@ -10,7 +10,7 @@ struct PanelView: View {
         VStack(alignment: .leading, spacing: 0) {
             tabs
             if let question = store.selected {
-                QuestionView(store: store, question: question, draft: store.draft(for: question), close: close)
+                QuestionView(store: store, question: question, draft: question.draft, close: close)
                     .id(question.id)
             } else {
                 empty

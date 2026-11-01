@@ -1,7 +1,7 @@
 import Foundation
 
 /// A form value as OpenCode encodes it: string, number, boolean, or string array.
-enum FormValue: Codable, Hashable {
+enum FormValue: Codable, Equatable {
     case string(String)
     case number(Double)
     case bool(Bool)
@@ -50,19 +50,19 @@ enum FormValue: Codable, Hashable {
     }
 }
 
-struct FormOption: Decodable, Hashable {
+struct FormOption: Decodable {
     let value: String
     let label: String
     let description: String?
 }
 
-struct FormWhen: Decodable, Hashable {
+struct FormWhen: Decodable {
     let key: String
     let op: String
     let value: FormValue
 }
 
-struct FormField: Decodable, Identifiable, Hashable {
+struct FormField: Decodable, Identifiable {
     let key: String
     let type: String
     let title: String?
@@ -92,19 +92,28 @@ struct FormField: Decodable, Identifiable, Hashable {
     }
 }
 
-struct FormInfo: Decodable, Identifiable, Hashable {
+struct FormInfo: Decodable, Identifiable {
     let id: String
     let sessionID: String
     let title: String
     let fields: [FormField]
 }
 
-/// A pending form plus the context needed to show where it came from.
-struct PendingQuestion: Identifiable, Hashable {
+/// A pending form, the answer being written for it, and the context needed to show where it came from.
+struct PendingQuestion: Identifiable {
     let form: FormInfo
+    /// Lives as long as the question, so switching between questions keeps input.
+    let draft: FormDraft
     var directory: String?
     var sessionTitle: String?
-    let receivedAt: Date
+    let receivedAt = Date()
+
+    @MainActor
+    init(form: FormInfo, directory: String?) {
+        self.form = form
+        self.draft = FormDraft(form: form)
+        self.directory = directory
+    }
 
     var id: String { form.id }
 
