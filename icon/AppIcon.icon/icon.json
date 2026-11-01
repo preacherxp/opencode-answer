@@ -1,0 +1,53 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "srgb:0.10000,0.10000,0.10000,1.00000",
+      "srgb:0.04000,0.04000,0.04000,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "image-name" : "glyph.png",
+          "name" : "glyph"
+        }
+      ],
+      "name" : "Glyph",
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0
+      }
+    },
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "image-name" : "grid.png",
+          "name" : "grid"
+        }
+      ],
+      "name" : "Grid",
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}
