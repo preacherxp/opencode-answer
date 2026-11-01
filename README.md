@@ -4,6 +4,8 @@ A macOS menu bar app that shows [OpenCode](https://opencode.ai)'s questions in a
 
 When an agent asks something (pick an option, confirm, type a value), the panel pops up in the top-right corner of the screen you're on, together with a notification. Answer there or in the terminal; whichever you use, the other one clears.
 
+<p align="center"><img src="docs/screenshot.png" width="596" alt="The OpenCode Answer panel asking whether to force-push to main, with three options, a free-text answer and a send button"></p>
+
 <p align="center"><img src="icon/preview.png" width="128" alt="App icon"></p>
 
 ## Requirements
