@@ -1,5 +1,7 @@
 # OpenCode Answer
 
+<p align="center"><a href="https://buymeacoffee.com/michal.hachula"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="41"></a></p>
+
 A macOS menu bar app that shows [OpenCode](https://opencode.ai)'s questions in a floating panel, so you can answer them without switching to the terminal.
 
 When an agent asks something (pick an option, confirm, type a value), the panel pops up in the top-right corner of the screen you're on, together with a notification. Answer there or in the terminal; whichever you use, the other one clears.
